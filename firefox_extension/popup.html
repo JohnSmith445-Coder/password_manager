@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasm Password Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="password-manager-container">
+        <!-- Header -->
+        <div class="password-header">
+            <h1><i class="fas fa-shield-alt"></i> Password Vault</h1>
+            <button id="autofill-button" class="autofill-btn" title="Autofill credentials for this site">
+                <i class="fas fa-fill-drip"></i> Autofill
+            </button>
+        </div>
+        
+        <!-- Password List -->
+        <div class="password-list-container">
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="passwordSearch" placeholder="Search passwords...">
+            </div>
+            
+            <div class="password-list" id="passwordList">
+                <!-- Passwords will be loaded here dynamically -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Loading passwords...</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Password Details -->
+        <div class="password-details" id="passwordDetails">
+            <div class="details-header">
+                <h2 id="detailsTitle">Select a password</h2>
+                <button id="closeDetails" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="details-content" id="detailsContent">
+                <p class="select-message">Select a password from the list to view details</p>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <a href="http://localhost:5000/password-manager" target="_blank" class="footer-link">
+                <i class="fas fa-external-link-alt"></i> Open Full Password Manager
+            </a>
+        </div>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>

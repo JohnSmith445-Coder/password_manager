@@ -1,0 +1,20 @@
+{
+  "manifest_version": 2,
+  "name": "Kasm Secure Browser Launcher",
+  "version": "1.0",
+  "description": "Open links in Kasm Workspace Chrome container for secure browsing",
+  "icons": {
+    "48": "icons/secure-browser-48.svg",
+    "96": "icons/secure-browser-96.svg"
+  },
+  "permissions": [
+    "contextMenus",
+    "activeTab",
+    "tabs",
+    "http://localhost/*",
+    "notifications"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  }
+}

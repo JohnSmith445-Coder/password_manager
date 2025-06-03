@@ -1,0 +1,40 @@
+{
+  "manifest_version": 2,
+  "name": "Kasm Workspace Manager",
+  "version": "1.0",
+  "description": "Manage your Kasm Workspace, access your password manager, and autofill credentials",
+  "permissions": [
+    "contextMenus",
+    "activeTab",
+    "tabs",
+    "http://localhost/*",
+    "notifications",
+    "clipboardWrite",
+    "storage",
+    "webNavigation",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

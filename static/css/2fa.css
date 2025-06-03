@@ -1,0 +1,322 @@
+/* 2FA Setup Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: #1e2130;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 80%;
+    max-width: 600px;
+    color: #e0e0e0;
+    position: relative;
+}
+
+.close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: #fff;
+    text-decoration: none;
+}
+
+.setup-step {
+    display: none;
+}
+
+.setup-step:first-child {
+    display: block;
+}
+
+.setup-step h3 {
+    margin-top: 0;
+    color: #4caf50;
+}
+
+#qr-code-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+#qr-code-container img {
+    max-width: 200px;
+    border: 10px solid white;
+    border-radius: 5px;
+}
+
+.manual-code-container {
+    background-color: #2a2e3d;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 15px 0;
+    text-align: center;
+    font-family: monospace;
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+.verification-container {
+    margin: 20px 0;
+}
+
+.verification-container input {
+    padding: 10px;
+    font-size: 16px;
+    width: 200px;
+    text-align: center;
+    letter-spacing: 5px;
+    background-color: #2a2e3d;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 4px;
+}
+
+.verification-container button {
+    margin-left: 10px;
+}
+
+#verify-error {
+    color: #ff5252;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.recovery-codes-container {
+    margin: 20px 0;
+}
+
+.recovery-codes-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.recovery-code {
+    background-color: #2a2e3d;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    font-family: monospace;
+    font-size: 16px;
+    letter-spacing: 1px;
+}
+
+.modal-actions, .modal-footer {
+    margin-top: 20px;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-actions button, .modal-footer button {
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: var(--primary, #3b82f6);
+    color: white;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary {
+    background-color: var(--bg-lighter, #222639);
+    color: var(--text-light, #e5e7eb);
+    border: 1px solid var(--border-color, #2d3748);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-danger {
+    background-color: var(--secondary, #e53e3e);
+    color: white;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark, #1e3a8a);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+    background-color: var(--bg-light, #1c202e);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-danger:hover {
+    background-color: var(--secondary-dark, #7f1d1d);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Hide duplicate verify button in modal footer */
+.modal-verify-btn {
+    display: none;
+}
+
+/* Form Actions Styling */
+.form-actions, .security-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.form-actions button, .security-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 2FA Status Indicator */
+.totp-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+.totp-enabled {
+    background-color: #4caf50;
+    color: white;
+}
+
+.totp-disabled {
+    background-color: #f44336;
+    color: white;
+}
+
+/* Security section in account settings */
+.security-section {
+    background-color: #1e2130;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.security-section h3 {
+    margin-top: 0;
+    color: #4caf50;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+}
+
+.security-option {
+    margin: 15px 0;
+}
+
+.security-option label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.security-option input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    background-color: #2a2e3d;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 4px;
+}
+
+.security-actions {
+    margin-top: 15px;
+}
+
+.security-actions button {
+    margin-right: 10px;
+}
+
+/* 2FA Setup Instructions */
+.setup-instructions {
+    margin: 15px 0;
+    line-height: 1.6;
+}
+
+.setup-instructions ol {
+    padding-left: 20px;
+}
+
+.setup-instructions li {
+    margin-bottom: 10px;
+}
+
+/* Recovery codes warning */
+.recovery-warning {
+    background-color: #ff9800;
+    color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 15px 0;
+    font-weight: bold;
+}
+
+/* Print recovery codes button */
+.print-codes {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    display: inline-block;
+}
+
+.print-codes:hover {
+    background-color: #1976d2;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    .recovery-codes-container,
+    .recovery-codes-container * {
+        visibility: visible;
+    }
+    
+    .recovery-codes-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}
