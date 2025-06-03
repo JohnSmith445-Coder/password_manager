@@ -31,8 +31,8 @@ A comprehensive Flask-based alternative to Kasm Workspace with enhanced security
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/kasm-workspace.git
-   cd kasm-workspace
+   git clone https://github.com/JohnSmith445-Coder/password_manager.git
+   cd password_manager
    ```
 
 2. Install dependencies:
