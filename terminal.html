@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Vault - Terminal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.1.0/css/xterm.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.1.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.7.0/lib/xterm-addon-fit.js"></script>
+    <style>
+        .terminal-container {
+            width: 100%;
+            height: calc(100vh - 40px);
+            padding: 30px;
+            background: rgba(20, 23, 34, 0.9);
+            display: flex;
+            flex-direction: column;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        .terminal-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+        
+        .terminal-container:hover::before {
+            transform: scaleX(1);
+        }
+        
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        
+        .terminal-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 3px;
+        }
+        
+        .terminal-header h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .terminal-header h1 i {
+            color: #3b82f6;
+            font-size: 1.8rem;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+        
+        .terminal-header:hover h1 i {
+            transform: translateY(-3px) rotate(-5deg);
+            color: #8b5cf6;
+        }
+        
+        .terminal-controls {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .terminal-controls button {
+            background: rgba(28, 32, 46, 0.8);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 18px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .terminal-controls button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.7s ease;
+        }
+        
+        .terminal-controls button:hover {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .terminal-controls button:hover::before {
+            left: 100%;
+        }
+        
+        .terminal-controls button:active,
+        .terminal-controls button.active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        .terminal-controls button i {
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .terminal-controls button:hover i {
+            transform: rotate(15deg);
+        }
+        
+        #terminal {
+            flex: 1;
+            background: rgba(15, 18, 26, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        #terminal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.03), transparent 70%);
+            pointer-events: none;
+        }
+        
+        #terminal:hover {
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+        
+        .terminal-info {
+            margin-top: 20px;
+            font-size: 0.95rem;
+            color: rgba(226, 232, 240, 0.7);
+            padding: 12px 15px;
+            background: rgba(28, 32, 46, 0.5);
+            border-radius: 8px;
+            border-left: 3px solid #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            animation: slideUp 0.5s ease-out 0.3s both;
+        }
+        
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .terminal-info:hover {
+            background: rgba(28, 32, 46, 0.8);
+            border-left-color: #8b5cf6;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .terminal-info i {
+            color: #3b82f6;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .terminal-info:hover i {
+            transform: rotate(15deg);
+            color: #8b5cf6;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-title">Secure Vault</div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-th-large"></i> Workspaces</a></li>
+            <li><a href="{{ url_for('password_manager') }}"><i class="fas fa-key"></i> Password Manager</a></li>
+            <li><a href="{{ url_for('file_vault') }}"><i class="fas fa-lock"></i> File Vault</a></li>
+            <li class="active"><a href="{{ url_for('terminal') }}"><i class="fas fa-terminal"></i> Terminal</a></li>
+            <li><a href="{{ url_for('account_settings') }}"><i class="fas fa-user-cog"></i> Account Settings</a></li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <div class="terminal-container">
+            <div class="terminal-header">
+                <h1><i class="fas fa-terminal"></i> Linux Terminal</h1>
+                <div class="terminal-controls">
+                    <button id="clear-terminal"><i class="fas fa-eraser"></i> Clear</button>
+                    <button id="restart-terminal"><i class="fas fa-redo"></i> Restart</button>
+                </div>
+            </div>
+            <div id="terminal"></div>
+            <div class="terminal-info">
+                <i class="fas fa-info-circle"></i> This terminal runs in a secure container with Ubuntu Linux.
+            </div>
+        </div>
+        <a href="{{ url_for('logout') }}" id="logout-btn">Logout</a>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize terminal
+            const term = new Terminal({
+                cursorBlink: true,
+                fontFamily: '"Cascadia Code", "Fira Code", monospace',
+                fontSize: 14,
+                lineHeight: 1.3,
+                cursorStyle: 'bar',
+                cursorWidth: 3,
+                theme: {
+                    background: '#0f121a',
+                    foreground: '#e5e7eb',
+                    cursor: '#3b82f6',
+                    cursorAccent: '#8b5cf6',
+                    selection: 'rgba(59, 130, 246, 0.3)',
+                    black: '#1c202e',
+                    red: '#f87171',
+                    green: '#10b981',
+                    yellow: '#fbbf24',
+                    blue: '#3b82f6',
+                    magenta: '#8b5cf6',
+                    cyan: '#06b6d4',
+                    white: '#f1f5f9',
+                    brightBlack: '#475569',
+                    brightRed: '#ef4444',
+                    brightGreen: '#22c55e',
+                    brightYellow: '#f59e0b',
+                    brightBlue: '#60a5fa',
+                    brightMagenta: '#a78bfa',
+                    brightCyan: '#22d3ee',
+                    brightWhite: '#f8fafc'
+                }
+            });
+            
+            // Use the fit addon to make terminal responsive
+            const fitAddon = new FitAddon.FitAddon();
+            term.loadAddon(fitAddon);
+            
+            // Open terminal in the container
+            term.open(document.getElementById('terminal'));
+            fitAddon.fit();
+            
+            // Handle terminal resize
+            window.addEventListener('resize', () => {
+                fitAddon.fit();
+            });
+            
+            // Connect to WebSocket for terminal communication
+            const socket = new WebSocket(`ws://${window.location.host}/terminal/ws`);
+            
+            // Handle WebSocket connection open
+            socket.onopen = () => {
+                // Animated terminal startup sequence
+                const startupSequence = async () => {
+                    const typeWithDelay = async (text, delay = 30) => {
+                        for (const char of text) {
+                            term.write(char);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                        }
+                        term.writeln('');
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                    };
+                    
+                    await typeWithDelay('\x1b[1;34m> \x1b[1;36mInitializing secure terminal connection...\x1b[0m', 15);
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    await typeWithDelay('\x1b[1;34m> \x1b[1;32mConnection established \x1b[1;32m[OK]\x1b[0m');
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    await typeWithDelay('\x1b[1;34m> \x1b[1;36mLoading Ubuntu Linux environment...\x1b[0m');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Simulated loading progress
+                    term.write('\x1b[1;34m> \x1b[1;33mProgress: \x1b[0m');
+                    for (let i = 0; i <= 100; i += 5) {
+                        term.write(`\x1b[1;32m${i}%\x1b[0m`);
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                        if (i < 100) term.write('\b\b\b\b');
+                    }
+                    term.writeln('');
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    
+                    await typeWithDelay('\x1b[1;34m> \x1b[1;32mUbuntu Linux loaded successfully \x1b[1;32m[OK]\x1b[0m');
+                    await typeWithDelay('\x1b[1;34m> \x1b[1;36mSecure container initialized\x1b[0m');
+                    await typeWithDelay('\x1b[1;34m> \x1b[1;32mTerminal ready \x1b[1;32m[OK]\x1b[0m');
+                    term.writeln('');
+                };
+                
+                startupSequence().then(() => {
+                    // Send terminal size to server
+                    const size = { cols: term.cols, rows: term.rows };
+                    socket.send(JSON.stringify({ type: 'resize', size }));
+                });
+            };
+            
+            // Handle WebSocket messages (terminal output)
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'output') {
+                    term.write(data.data);
+                }
+            };
+            
+            // Handle WebSocket errors
+            socket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                term.writeln('\r\nError: Connection to terminal server failed');
+            };
+            
+            // Handle WebSocket connection close
+            socket.onclose = () => {
+                term.writeln('\r\nConnection to terminal server closed');
+            };
+            
+            // Send terminal input to server
+            term.onData((data) => {
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: 'input', data }));
+                }
+            });
+            
+            // Handle terminal resize
+            term.onResize((size) => {
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: 'resize', size }));
+                }
+            });
+            
+            // Clear terminal button with visual feedback
+            $('#clear-terminal').click(function() {
+                // Add visual feedback animation
+                const button = $(this);
+                button.addClass('active');
+                
+                // Show clearing message with animation
+                term.write('\x1b[1;33m\r\nClearing terminal...\x1b[0m');
+                
+                // Simulate clearing with visual effect
+                setTimeout(() => {
+                    term.clear();
+                    term.writeln('\x1b[1;32mTerminal cleared \x1b[1;32m[OK]\x1b[0m');
+                    term.writeln('');
+                    
+                    // Remove active state after animation
+                    setTimeout(() => {
+                        button.removeClass('active');
+                    }, 300);
+                }, 500);
+            });
+            
+            // Restart terminal button with visual feedback
+            $('#restart-terminal').click(function() {
+                if (socket.readyState === WebSocket.OPEN) {
+                    // Add visual feedback animation
+                    const button = $(this);
+                    button.addClass('active');
+                    
+                    // Clear and show restart message
+                    term.clear();
+                    term.writeln('\x1b[1;33mRestarting terminal...\x1b[0m');
+                    
+                    // Simulate restart with visual effect
+                    setTimeout(() => {
+                        // Send restart command to server
+                        socket.send(JSON.stringify({ type: 'restart' }));
+                        
+                        // Show restart animation
+                        const restartSequence = async () => {
+                            term.clear();
+                            term.write('\x1b[1;34m> \x1b[1;33mRestarting system...\x1b[0m');
+                            
+                            // Animated dots
+                            for (let i = 0; i < 3; i++) {
+                                await new Promise(resolve => setTimeout(resolve, 300));
+                                term.write('.');
+                            }
+                            term.writeln('');
+                            
+                            await new Promise(resolve => setTimeout(resolve, 300));
+                            term.writeln('\x1b[1;34m> \x1b[1;32mSystem restarted successfully \x1b[1;32m[OK]\x1b[0m');
+                            term.writeln('');
+                        };
+                        
+                        restartSequence().then(() => {
+                            // Remove active state after animation
+                            setTimeout(() => {
+                                button.removeClass('active');
+                            }, 300);
+                        });
+                    }, 500);
+                }
+            });
+            
+            // Add visual feedback for button hover
+            $('.terminal-controls button').hover(
+                function() {
+                    const icon = $(this).find('i');
+                    icon.css('transform', 'rotate(15deg)');
+                },
+                function() {
+                    const icon = $(this).find('i');
+                    icon.css('transform', 'rotate(0deg)');
+                }
+            );
+        });
+    </script>
+</body>
+</html>

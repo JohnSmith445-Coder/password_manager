@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Vault - Preferences</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-ui.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-title">Secure Vault</div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-th-large"></i> Workspaces</a></li>
+            <li><a href="{{ url_for('password_manager') }}"><i class="fas fa-key"></i> Password Manager</a></li>
+            <li><a href="{{ url_for('file_vault') }}"><i class="fas fa-lock"></i> File Vault</a></li>
+            <li><a href="{{ url_for('terminal') }}"><i class="fas fa-terminal"></i> Terminal</a></li>
+            <li><a href="{{ url_for('account_settings') }}"><i class="fas fa-user-cog"></i> Account Settings</a></li>
+        </ul>
+        
+        <!-- User profile section at bottom of sidebar -->
+        <div class="sidebar-user" id="sidebar-user-btn">
+            <div class="user-avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="user-info">
+                <div class="user-name">{{ session.get('username', 'User') }}</div>
+                <div class="user-role">Administrator</div>
+            </div>
+            <div class="user-chevron">
+                <i class="fas fa-chevron-up"></i>
+            </div>
+        </div>
+        
+        <!-- User modal with options -->
+        <div class="user-modal" id="user-modal">
+            <div class="user-modal-option" id="account-btn">
+                <i class="fas fa-user-cog"></i>
+                <span>Account Settings</span>
+            </div>
+            <div class="user-modal-option" id="theme-toggle">
+                <i class="fas fa-moon"></i>
+                <span>Dark Mode</span>
+            </div>
+            <div class="user-modal-option active" id="settings-btn">
+                <i class="fas fa-cog"></i>
+                <span>Preferences</span>
+            </div>
+            <div class="user-modal-option" id="help-btn">
+                <i class="fas fa-question-circle"></i>
+                <span>Help & Support</span>
+            </div>
+            <div class="user-modal-separator"></div>
+            <div class="user-modal-option logout-option">
+                <a href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification bell icon -->
+    <div class="notification-bell" id="notification-bell">
+        <i class="fas fa-bell"></i>
+        <span class="notification-badge">1</span>
+    </div>
+
+    <!-- Notification center -->
+    <div class="notification-center" id="notification-center">
+        <div class="notification-header">
+            <h3><i class="fas fa-bell"></i> Notifications</h3>
+            <button id="close-notifications"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="notification-list" id="notification-list">
+            <div class="notification-item">
+                <div class="notification-icon"><i class="fas fa-info-circle"></i></div>
+                <div class="notification-content">
+                    <div class="notification-title">Welcome to Secure Vault</div>
+                    <div class="notification-message">Your workspace is ready to use.</div>
+                    <div class="notification-time">Just now</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern, full-height settings panel -->
+    <div class="settings-panel animated fadeInUp">
+        <div class="settings-header">
+            <h1><i class="fas fa-cog"></i> Preferences</h1>
+            <p>Customize your Secure Vault experience</p>
+        </div>
+        <div class="settings-sections">
+            <!-- Appearance Section -->
+            <section class="settings-section">
+                <h2><i class="fas fa-palette"></i> Appearance</h2>
+                <form id="appearance-form" class="settings-form">
+                    <div class="form-group">
+                        <label>Theme</label>
+                        <div class="theme-options">
+                            <div class="theme-option" data-theme="dark">
+                                <div class="theme-preview dark-preview"></div>
+                                <span>Dark</span>
+                            </div>
+                            <div class="theme-option" data-theme="light">
+                                <div class="theme-preview light-preview"></div>
+                                <span>Light</span>
+                            </div>
+                            <div class="theme-option" data-theme="system">
+                                <div class="theme-preview system-preview"></div>
+                                <span>System</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Accent Color</label>
+                        <div class="color-options">
+                            <div class="color-option" data-color="blue" style="background-color: #3b82f6;"></div>
+                            <div class="color-option" data-color="purple" style="background-color: #8b5cf6;"></div>
+                            <div class="color-option" data-color="green" style="background-color: #10b981;"></div>
+                            <div class="color-option" data-color="red" style="background-color: #ef4444;"></div>
+                            <div class="color-option" data-color="amber" style="background-color: #f59e0b;"></div>
+                            <div class="color-option" data-color="pink" style="background-color: #ec4899;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Font Size</label>
+                        <div class="range-slider">
+                            <input type="range" id="font-size" name="font_size" min="12" max="20" value="16">
+                            <div class="range-value"><span id="font-size-value">16</span>px</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="animations" name="animations">
+                            <span class="checkbox-custom"></span>
+                            Enable Animations
+                        </label>
+                    </div>
+                </form>
+            </section>
+            <!-- Workspace Section -->
+            <section class="settings-section">
+                <h2><i class="fas fa-desktop"></i> Workspace</h2>
+                <form id="workspace-form" class="settings-form">
+                    <div class="form-group">
+                        <label>Default Layout</label>
+                        <select id="default-layout" name="default_layout">
+                            <option value="grid">Grid View</option>
+                            <option value="list">List View</option>
+                            <option value="compact">Compact View</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Container Timeout</label>
+                        <select id="container-timeout" name="container_timeout">
+                            <option value="30">30 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="120">2 hours</option>
+                            <option value="240">4 hours</option>
+                            <option value="480">8 hours</option>
+                            <option value="0">Never</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="auto-save" name="auto_save">
+                            <span class="checkbox-custom"></span>
+                            Auto-save Containers
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="persistent-storage" name="persistent_storage">
+                            <span class="checkbox-custom"></span>
+                            Persistent Storage
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Default Browser</label>
+                        <select id="default-browser" name="default_browser">
+                            <option value="firefox">Firefox</option>
+                            <option value="chrome">Chrome</option>
+                            <option value="edge">Edge</option>
+                            <option value="brave">Brave</option>
+                            <option value="tor">Tor Browser</option>
+                        </select>
+                    </div>
+                </form>
+            </section>
+            <!-- Password Manager Section -->
+            <section class="settings-section">
+                <h2><i class="fas fa-key"></i> Password Manager</h2>
+                <form id="password-manager-form" class="settings-form">
+                    <div class="form-group">
+                        <label>Password Length</label>
+                        <div class="range-slider">
+                            <input type="range" id="password-length" name="password_length" min="8" max="32" value="16">
+                            <div class="range-value"><span id="password-length-value">16</span> chars</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="include-uppercase" name="include_uppercase">
+                            <span class="checkbox-custom"></span>
+                            Include Uppercase
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="include-lowercase" name="include_lowercase">
+                            <span class="checkbox-custom"></span>
+                            Include Lowercase
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="include-numbers" name="include_numbers">
+                            <span class="checkbox-custom"></span>
+                            Include Numbers
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="include-symbols" name="include_symbols">
+                            <span class="checkbox-custom"></span>
+                            Include Symbols
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enable-autofill" name="enable_autofill">
+                            <span class="checkbox-custom"></span>
+                            Enable Autofill
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="require-auth" name="require_auth">
+                            <span class="checkbox-custom"></span>
+                            Require Auth
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-password">Admin Password</label>
+                        <input type="password" id="admin-password" name="admin_password" placeholder="Enter new admin password">
+                    </div>
+                </form>
+            </section>
+            <!-- Notifications Section -->
+            <section class="settings-section">
+                <h2><i class="fas fa-bell"></i> Notifications</h2>
+                <form id="notification-form" class="settings-form">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="security-notifications" name="security_notifications">
+                            <span class="checkbox-custom"></span>
+                            Security Alerts
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="container-notifications" name="container_notifications">
+                            <span class="checkbox-custom"></span>
+                            Container Status
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="password-notifications" name="password_notifications">
+                            <span class="checkbox-custom"></span>
+                            Password Alerts
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="file-notifications" name="file_notifications">
+                            <span class="checkbox-custom"></span>
+                            File Vault
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Notification Display</label>
+                        <select id="notification-display" name="notification_display">
+                            <option value="all">Show All</option>
+                            <option value="important">Important Only</option>
+                            <option value="none">Disable All</option>
+                        </select>
+                    </div>
+                </form>
+            </section>
+        </div>
+        <div class="settings-actions">
+            <button id="reset-defaults" class="action-button danger"><i class="fas fa-undo"></i> Reset to Defaults</button>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    $(function() {
+        // Load settings from backend
+        function loadSettings() {
+            $.get('/api/user-settings', function(data) {
+                // Appearance
+                $(`.theme-option`).removeClass('active');
+                $(`.theme-option[data-theme='${data.theme}']`).addClass('active');
+                $(`.color-option`).removeClass('active');
+                $(`.color-option[data-color='${data.accent_color}']`).addClass('active');
+                $('#font-size').val(data.font_size);
+                $('#font-size-value').text(data.font_size);
+                $('#animations').prop('checked', data.animations);
+                // Workspace
+                $('#default-layout').val(data.default_layout);
+                $('#container-timeout').val(data.container_timeout);
+                $('#auto-save').prop('checked', data.auto_save);
+                $('#persistent-storage').prop('checked', data.persistent_storage);
+                $('#default-browser').val(data.default_browser);
+                // Password Manager
+                $('#password-length').val(data.password_length);
+                $('#password-length-value').text(data.password_length);
+                $('#include-uppercase').prop('checked', data.include_uppercase);
+                $('#include-lowercase').prop('checked', data.include_lowercase);
+                $('#include-numbers').prop('checked', data.include_numbers);
+                $('#include-symbols').prop('checked', data.include_symbols);
+                $('#enable-autofill').prop('checked', data.enable_autofill);
+                $('#require-auth').prop('checked', data.require_auth);
+                $('#admin-password').val(data.admin_password);
+                // Notifications
+                $('#security-notifications').prop('checked', data.security_notifications);
+                $('#container-notifications').prop('checked', data.container_notifications);
+                $('#password-notifications').prop('checked', data.password_notifications);
+                $('#file-notifications').prop('checked', data.file_notifications);
+                $('#notification-display').val(data.notification_display);
+            });
+        }
+        loadSettings();
+        // Save settings instantly on change
+        $('.settings-form input, .settings-form select').on('change input', function() {
+            let form = $(this).closest('form');
+            let data = form.serializeArray();
+            let payload = {};
+            data.forEach(function(item) { payload[item.name] = item.value; });
+            form.find('input[type=checkbox]').each(function() { payload[this.name] = this.checked; });
+            $.ajax({
+                url: '/api/update-settings',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(res) {
+                    loadSettings();
+                    showAnimatedToast('Settings saved!', 'success');
+                },
+                error: function() {
+                    showAnimatedToast('Failed to save settings.', 'error');
+                }
+            });
+        });
+        // Reset to defaults
+        $('#reset-defaults').on('click', function() {
+            if (confirm('Reset all settings to default values?')) {
+                $.post('/api/reset-settings', function(res) {
+                    loadSettings();
+                    showAnimatedToast('Settings reset to defaults!', 'info');
+                });
+            }
+        });
+        // Animated toast
+        function showAnimatedToast(msg, type) {
+            let toast = $(`<div class='animated-toast ${type}'>${msg}</div>`);
+            $('body').append(toast);
+            setTimeout(() => { toast.addClass('show'); }, 10);
+            setTimeout(() => { toast.removeClass('show'); toast.remove(); }, 2500);
+        }
+        // Theme/Accent selection
+        $('.theme-option').click(function() {
+            $('.theme-option').removeClass('active');
+            $(this).addClass('active');
+            let theme = $(this).data('theme');
+            $('#appearance-form input[name=theme]').val(theme).trigger('change');
+        });
+        $('.color-option').click(function() {
+            $('.color-option').removeClass('active');
+            $(this).addClass('active');
+            let color = $(this).data('color');
+            $('#appearance-form input[name=accent_color]').val(color).trigger('change');
+        });
+        // Range sliders
+        $('#font-size').on('input', function() {
+            $('#font-size-value').text($(this).val());
+        });
+        $('#password-length').on('input', function() {
+            $('#password-length-value').text($(this).val());
+        });
+    });
+    </script>
+    <style>
+    body { background: var(--background, #181c24); color: var(--text, #e5e7eb); }
+    .settings-panel {
+        position: fixed;
+        left: 240px; /* Increased from 80px to 240px to account for sidebar width */
+        top: 0; bottom: 0; right: 0;
+        background: rgba(24,28,36,0.98);
+        box-shadow: 0 0 32px 0 rgba(0,0,0,0.18);
+        padding: 48px 0 0 0;
+        overflow-y: auto;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        animation: fadeInUp 0.7s cubic-bezier(.23,1.01,.32,1) both;
+    }
+    .settings-header { padding: 32px 48px 0 48px; border-bottom: 1px solid #23272f; }
+    .settings-header h1 { font-size: 2.2rem; margin-bottom: 0.2em; }
+    .settings-header p { color: #8b949e; margin-bottom: 0; }
+    .settings-sections { display: flex; flex-wrap: wrap; gap: 32px; padding: 32px 48px; }
+    .settings-section {
+        background: #23272f;
+        border-radius: 18px;
+        box-shadow: 0 2px 16px 0 rgba(0,0,0,0.08);
+        flex: 1 1 340px;
+        min-width: 340px;
+        max-width: 420px;
+        padding: 32px 28px 24px 28px;
+        margin-bottom: 0;
+        transition: box-shadow .3s;
+        animation: fadeInUp 0.7s cubic-bezier(.23,1.01,.32,1) both;
+    }
+    .settings-section:hover { box-shadow: 0 4px 32px 0 rgba(59,130,246,0.10); }
+    .settings-section h2 { font-size: 1.3rem; margin-bottom: 1.2em; color: #3b82f6; }
+    .settings-form { display: flex; flex-direction: column; gap: 18px; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .theme-options, .color-options { display: flex; gap: 12px; }
+    .theme-option, .color-option {
+        border-radius: 8px; cursor: pointer; transition: box-shadow .2s, border .2s;
+        border: 2px solid transparent; box-shadow: 0 1px 4px 0 rgba(0,0,0,0.08);
+        padding: 6px 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .theme-option.active, .color-option.active { border: 2px solid #3b82f6; box-shadow: 0 2px 8px 0 rgba(59,130,246,0.10); }
+    .theme-preview { width: 28px; height: 18px; border-radius: 4px; }
+    .dark-preview { background: #181c24; border: 1px solid #23272f; }
+    .light-preview { background: #f3f4f6; border: 1px solid #d1d5db; }
+    .system-preview { background: linear-gradient(90deg,#181c24 50%,#f3f4f6 50%); border: 1px solid #23272f; }
+    .range-slider { display: flex; align-items: center; gap: 12px; }
+    .range-slider input[type=range] { width: 120px; }
+    .range-value { font-size: 1rem; color: #8b949e; }
+    .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 1rem; }
+    .checkbox-custom { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #3b82f6; display: inline-block; background: #23272f; margin-right: 6px; position: relative; }
+    .checkbox-label input[type=checkbox]:checked + .checkbox-custom { background: #3b82f6; border-color: #3b82f6; }
+    .checkbox-label input[type=checkbox] { display: none; }
+    .settings-actions { text-align: center; margin: 32px 0 48px 0; }
+    .action-button { background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 12px 32px; font-size: 1.1rem; cursor: pointer; margin: 0 8px; transition: background .2s; }
+    .action-button.danger { background: #ef4444; }
+    .action-button:hover { background: #2563eb; }
+    .action-button.danger:hover { background: #b91c1c; }
+    .animated-toast { position:fixed; bottom:30px; right:30px; background:#222; color:#fff; padding:16px 32px; border-radius:8px; opacity:0; pointer-events:none; z-index:9999; transform:translateY(30px); transition:all .4s cubic-bezier(.23,1.01,.32,1); font-size:1.1rem; }
+    .animated-toast.show { opacity:1; pointer-events:auto; transform:translateY(0); }
+    .animated-toast.success { background:#10b981; }
+    .animated-toast.error { background:#ef4444; }
+    .animated-toast.info { background:#3b82f6; }
+    @media (max-width: 1200px) {
+        .settings-panel { left: 80px; }
+        .settings-sections { padding: 24px 4vw; }
+    }
+    @media (max-width: 900px) {
+        .settings-panel { left: 0; }
+        .settings-sections { flex-direction: column; gap: 24px; padding: 24px 8vw; }
+        .settings-section { min-width: 0; max-width: 100%; }
+        .settings-header { padding: 24px 8vw 0 8vw; }
+    }
+    </style>
+</body>
+</html>

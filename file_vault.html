@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Vault - File Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/folder-styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-title">Secure Vault</div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-th-large"></i> Workspaces</a></li>
+            <li><a href="{{ url_for('password_manager') }}"><i class="fas fa-key"></i> Password Manager</a></li>
+            <li class="active"><a href="{{ url_for('file_vault') }}"><i class="fas fa-lock"></i> File Vault</a></li>
+            <li><a href="{{ url_for('terminal') }}"><i class="fas fa-terminal"></i> Terminal</a></li>
+            <li><a href="{{ url_for('account_settings') }}"><i class="fas fa-user-cog"></i> Account Settings</a></li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h1>File Vault</h1>
+        
+        <div class="controls">
+            <button id="upload-file-btn" class="action-button"><i class="fas fa-file-upload"></i> Upload File</button>
+            <button id="upload-folder-btn" class="action-button"><i class="fas fa-folder-upload"></i> Upload Folder</button>
+            <button id="create-folder-btn" class="action-button"><i class="fas fa-folder-plus"></i> Create Folder</button>
+        </div>
+        
+        <!-- Breadcrumb Navigation -->
+        <div class="breadcrumb-nav">
+            <ul>
+                {% for crumb in breadcrumbs %}
+                    <li>
+                        {% if loop.last %}
+                            <span class="current">{{ crumb.name }}</span>
+                        {% else %}
+                            <a href="{{ url_for('file_vault', folder_id=crumb.id) }}">{{ crumb.name }}</a>
+                            <i class="fas fa-chevron-right"></i>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- File Upload Form -->
+        <div id="upload-file-form" style="display: none;" class="upload-form-container">
+            <h2><i class="fas fa-cloud-upload-alt"></i> Upload Encrypted File</h2>
+            <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" id="file-upload-form">
+                <input type="hidden" name="folder_id" value="{{ current_folder.id if current_folder else 'null' }}">
+                <div class="form-group file-input-group">
+                    <label for="file"><i class="fas fa-file-alt"></i> Select File:</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="file" name="file" required>
+                        <div class="file-input-button"><i class="fas fa-folder-open"></i> Browse Files</div>
+                        <div class="selected-file">No file selected</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="description"><i class="fas fa-info-circle"></i> Description:</label>
+                    <input type="text" id="description" name="description" required placeholder="Enter a description for this file">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-shield-alt"></i> Encryption Information:</label>
+                    <div class="encryption-info">
+                        <p><i class="fas fa-lock"></i> Files are automatically encrypted with AES-256 encryption</p>
+                        <p><i class="fas fa-key"></i> Encryption key is derived from your login credentials</p>
+                        <p><i class="fas fa-shield-alt"></i> Files can only be decrypted with your account</p>
+                    </div>
+                </div>
+                <div class="form-group" id="upload-progress-container" style="display: none;">
+                    <label><i class="fas fa-spinner fa-spin"></i> Upload Progress:</label>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="upload-progress-bar"></div>
+                    </div>
+                    <div id="upload-status">Preparing upload...</div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="submit-button"><i class="fas fa-upload"></i> Upload File</button>
+                    <button type="button" id="cancel-upload" class="cancel-button"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Folder Upload Form -->
+        <div id="upload-folder-form" style="display: none;" class="upload-form-container">
+            <h2><i class="fas fa-folder-upload"></i> Upload Encrypted Folder</h2>
+            <form action="{{ url_for('upload_folder') }}" method="post" enctype="multipart/form-data" id="folder-upload-form">
+                <input type="hidden" name="folder_id" value="{{ current_folder.id if current_folder else 'null' }}">
+                <div class="form-group file-input-group">
+                    <label for="folder-input"><i class="fas fa-folder"></i> Select Folder:</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="folder-input" name="files[]" webkitdirectory directory multiple>
+                        <div class="file-input-button"><i class="fas fa-folder-open"></i> Browse Folders</div>
+                        <div class="selected-folder">No folder selected</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-shield-alt"></i> Encryption Information:</label>
+                    <div class="encryption-info">
+                        <p><i class="fas fa-lock"></i> All files are automatically encrypted with AES-256 encryption</p>
+                        <p><i class="fas fa-key"></i> Encryption key is derived from your login credentials</p>
+                        <p><i class="fas fa-shield-alt"></i> Files can only be decrypted with your account</p>
+                    </div>
+                </div>
+                <div class="form-group" id="folder-upload-progress-container" style="display: none;">
+                    <label><i class="fas fa-spinner fa-spin"></i> Upload Progress:</label>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="folder-upload-progress-bar"></div>
+                    </div>
+                    <div id="folder-upload-status">Preparing upload...</div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="submit-button"><i class="fas fa-upload"></i> Upload Folder</button>
+                    <button type="button" id="cancel-folder-upload" class="cancel-button"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Create Folder Form -->
+        <div id="create-folder-form" style="display: none;" class="upload-form-container">
+            <h2><i class="fas fa-folder-plus"></i> Create New Folder</h2>
+            <form action="{{ url_for('create_folder') }}" method="post" id="folder-create-form">
+                <input type="hidden" name="parent_id" value="{{ current_folder.id if current_folder else 'null' }}">
+                <div class="form-group">
+                    <label for="folder_name"><i class="fas fa-folder"></i> Folder Name:</label>
+                    <input type="text" id="folder_name" name="folder_name" required placeholder="Enter folder name">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="submit-button"><i class="fas fa-check"></i> Create Folder</button>
+                    <button type="button" id="cancel-folder-create" class="cancel-button"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </form>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="file-list">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Size</th>
+                        <th>Upload Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Folders first -->
+                    {% for folder in folders %}
+                    <tr class="folder-row" data-folder-id="{{ folder.id }}">
+                        <td>
+                            <div class="folder-link" data-folder-id="{{ folder.id }}">
+                                <i class="fas fa-folder-closed folder-icon"></i>
+                                <span class="folder-name">{{ folder.name }}</span>
+                                <i class="fas fa-chevron-down folder-toggle-icon"></i>
+                            </div>
+                        </td>
+                        <td>Folder</td>
+                        <td>{{ folder.size_formatted }}</td>
+                        <td>{{ folder.upload_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="actions">
+                            <a href="{{ url_for('download_folder', folder_id=folder.id) }}" class="download-btn" title="Download Folder as ZIP">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            <form action="{{ url_for('delete_folder', folder_id=folder.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="delete-btn" onclick="return confirm('Are you sure you want to delete this folder and ALL its contents? This cannot be undone.');" title="Delete Folder">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr class="subfolder-row" data-parent-folder-id="{{ folder.id }}" style="display: none;">
+                        <td colspan="5">
+                            <div class="subfolder-content" data-folder-id="{{ folder.id }}">
+                                <!-- This will be populated via JavaScript -->
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                    <!-- Then files -->
+                    {% for file in files %}
+                    <tr class="file-row">
+                        <td>
+                            <span class="file-name">
+                                <i class="fas fa-file"></i> {{ file.original_filename }}
+                            </span>
+                        </td>
+                        <td>{{ file.file_type }}</td>
+                        <td>{{ file.size_formatted }}</td>
+                        <td>{{ file.upload_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="actions">
+                            <a href="{{ url_for('download_file', file_id=file.id) }}" class="download-btn" title="Download File">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            <form action="{{ url_for('delete_file', file_id=file.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="delete-btn" onclick="return confirm('Are you sure you want to delete this file?');" title="Delete File">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                    {% if not folders and not files %}
+                    <tr>
+                        <td colspan="5" class="empty-message">
+                            <i class="fas fa-folder-open"></i> This folder is empty
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            console.log("Folder link click handler attached"); // DEBUG: Confirm script runs
+            // Add ripple effect to buttons and links
+            function createRipple(event) {
+                const button = event.currentTarget;
+                
+                // Remove any existing ripples
+                const ripples = button.getElementsByClassName('ripple');
+                while (ripples.length > 0) {
+                    ripples[0].remove();
+                }
+                
+                const circle = document.createElement('span');
+                const diameter = Math.max(button.clientWidth, button.clientHeight);
+                const radius = diameter / 2;
+                
+                // Get position relative to the button
+                const rect = button.getBoundingClientRect();
+                const left = event.clientX - rect.left - radius;
+                const top = event.clientY - rect.top - radius;
+                
+                circle.style.width = circle.style.height = `${diameter}px`;
+                circle.style.left = `${left}px`;
+                circle.style.top = `${top}px`;
+                circle.classList.add('ripple');
+                
+                button.appendChild(circle);
+                
+                // Add clicked class for pulse animation
+                button.classList.add('clicked');
+                setTimeout(() => {
+                    button.classList.remove('clicked');
+                }, 500);
+                
+                // Remove ripple after animation completes
+                setTimeout(() => {
+                    circle.remove();
+                }, 600);
+            }
+            
+            // Apply ripple effect to all folder links and action buttons
+            $(document).on('click', '.folder-link, .item-action-btn, .download-btn-small, .delete-btn-small', function(e) {
+                createRipple(e);
+            });
+            
+            // Show/hide forms with animation
+            $('#upload-file-btn').click(function() {
+                hideAllForms();
+                $('#upload-file-form').slideDown(300);
+            });
+            
+            $('#upload-folder-btn').click(function() {
+                hideAllForms();
+                $('#upload-folder-form').slideDown(300);
+            });
+            
+            $('#create-folder-btn').click(function() {
+                hideAllForms();
+                $('#create-folder-form').slideDown(300);
+            });
+            
+            // Cancel buttons
+            $('#cancel-upload').click(function() {
+                $('#upload-file-form').slideUp(300);
+            });
+            
+            $('#cancel-folder-upload').click(function() {
+                $('#upload-folder-form').slideUp(300);
+            });
+            
+            $('#cancel-folder-create').click(function() {
+                $('#create-folder-form').slideUp(300);
+            });
+            
+            // Helper function to hide all forms
+            function hideAllForms() {
+                $('#upload-file-form').slideUp(300);
+                $('#upload-folder-form').slideUp(300);
+                $('#create-folder-form').slideUp(300);
+            }
+            
+            // Handle file selection display
+            $('#file').change(function() {
+                var fileName = $(this).val().split('\\').pop();
+                if (fileName) {
+                    $('.selected-file').text(fileName);
+                    $('.selected-file').addClass('file-selected');
+                } else {
+                    $('.selected-file').text('No file selected');
+                    $('.selected-file').removeClass('file-selected');
+                }
+            });
+            
+            // Handle folder selection display
+            $('#folder-input').change(function() {
+                var fileCount = $(this)[0].files.length;
+                if (fileCount > 0) {
+                    // Get folder name from the first file's path
+                    var path = $(this)[0].files[0].webkitRelativePath;
+                    var folderName = path.split('/')[0];
+                    $('.selected-folder').text(folderName + ' (' + fileCount + ' files)');
+                    $('.selected-folder').addClass('folder-selected');
+                    
+                    // Add folder paths as hidden inputs
+                    $('#folder-upload-form .folder-paths').remove();
+                    for (var i = 0; i < fileCount; i++) {
+                        var filePath = $(this)[0].files[i].webkitRelativePath;
+                        var folderPath = filePath.substring(0, filePath.lastIndexOf('/'));
+                        $('<input>').attr({
+                            type: 'hidden',
+                            name: 'folder_paths[]',
+                            value: folderPath,
+                            class: 'folder-paths'
+                        }).appendTo('#folder-upload-form');
+                    }
+                } else {
+                    $('.selected-folder').text('No folder selected');
+                    $('.selected-folder').removeClass('folder-selected');
+                }
+            });
+            
+            // Handle file upload with fancy progress bar
+            $('#file-upload-form').submit(function(e) {
+                var fileInput = $('#file')[0];
+                if (fileInput.files.length === 0) {
+                    alert('Please select a file to upload');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Show progress bar with animation
+                $('#upload-progress-container').fadeIn(300);
+                $('#upload-progress-bar').width('0%');
+                $('#upload-status').text('Starting upload...');
+                
+                // Animated progress simulation with improved easing
+                var progress = 0;
+                var targetProgress = 0;
+                var lastUpdate = Date.now();
+                var uploadStartTime = Date.now();
+                var simulatedUploadTime = Math.random() * 3000 + 2000; // Random time between 2-5 seconds
+                
+                // Function to update the visual progress bar smoothly
+                function updateProgressBar() {
+                    // Calculate time elapsed since last update
+                    var now = Date.now();
+                    var deltaTime = now - lastUpdate;
+                    lastUpdate = now;
+                    
+                    // Smoothly interpolate current progress toward target progress
+                    var progressDiff = targetProgress - progress;
+                    progress += progressDiff * Math.min(1, deltaTime / 200);
+                    
+                    // Update the UI
+                    $('#upload-progress-bar').width(progress + '%');
+                    $('#upload-status').html('<i class="fas fa-sync fa-spin"></i> Uploading... ' + Math.round(progress) + '%');
+                    
+                    // Continue animation until we reach 100%
+                    if (progress < 100) {
+                        requestAnimationFrame(updateProgressBar);
+                    } else {
+                        $('#upload-status').html('<i class="fas fa-lock"></i> Processing file encryption...');
+                    }
+                }
+                
+                // Function to update the target progress based on simulated upload time
+                var progressInterval = setInterval(function() {
+                    // Calculate how far along we are in the simulated upload
+                    var elapsed = Date.now() - uploadStartTime;
+                    var completion = Math.min(1, elapsed / simulatedUploadTime);
+                    
+                    // Use an easing function to make progress more natural
+                    // Slow start, faster middle, slow approach to 100%
+                    if (completion < 0.7) {
+                        // Accelerating phase - cubic ease-in
+                        targetProgress = 85 * Math.pow(completion / 0.7, 2);
+                    } else {
+                        // Decelerating phase - approaching 100% more slowly
+                        targetProgress = 85 + (15 * (completion - 0.7) / 0.3);
+                    }
+                    
+                    // If we've reached the end of the simulated upload time
+                    if (completion >= 1) {
+                        clearInterval(progressInterval);
+                        targetProgress = 100;
+                    }
+                }, 100);
+                
+                // Start the smooth progress animation
+                requestAnimationFrame(updateProgressBar);
+                
+                // Allow the form to submit normally
+                return true;
+            });
+            
+            // Handle folder upload with fancy progress bar
+            $('#folder-upload-form').submit(function(e) {
+                var folderInput = $('#folder-input')[0];
+                if (folderInput.files.length === 0) {
+                    alert('Please select a folder to upload');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Show progress bar with animation
+                $('#folder-upload-progress-container').fadeIn(300);
+                $('#folder-upload-progress-bar').width('0%');
+                $('#folder-upload-status').text('Starting upload...');
+                
+                // Animated progress simulation with improved easing
+                var progress = 0;
+                var targetProgress = 0;
+                var lastUpdate = Date.now();
+                var uploadStartTime = Date.now();
+                // For folders, simulate longer upload time based on number of files
+                var fileCount = folderInput.files.length;
+                var simulatedUploadTime = Math.min(10000, 2000 + (fileCount * 100)); // Cap at 10 seconds
+                
+                // Function to update the visual progress bar smoothly
+                function updateFolderProgressBar() {
+                    // Calculate time elapsed since last update
+                    var now = Date.now();
+                    var deltaTime = now - lastUpdate;
+                    lastUpdate = now;
+                    
+                    // Smoothly interpolate current progress toward target progress
+                    var progressDiff = targetProgress - progress;
+                    progress += progressDiff * Math.min(1, deltaTime / 200);
+                    
+                    // Update the UI
+                    $('#folder-upload-progress-bar').width(progress + '%');
+                    $('#folder-upload-status').html('<i class="fas fa-sync fa-spin"></i> Uploading folder... ' + Math.round(progress) + '%');
+                    
+                    // Continue animation until we reach 100%
+                    if (progress < 100) {
+                        requestAnimationFrame(updateFolderProgressBar);
+                    } else {
+                        $('#folder-upload-status').html('<i class="fas fa-lock"></i> Processing folder encryption...');
+                    }
+                }
+                
+                // Function to update the target progress based on simulated upload time
+                var progressInterval = setInterval(function() {
+                    // Calculate how far along we are in the simulated upload
+                    var elapsed = Date.now() - uploadStartTime;
+                    var completion = Math.min(1, elapsed / simulatedUploadTime);
+                    
+                    // Use an easing function to make progress more natural
+                    // For folders, use a slightly different curve to simulate batch processing
+                    if (completion < 0.2) {
+                        // Slow start - initial connection and setup
+                        targetProgress = 20 * Math.pow(completion / 0.2, 2);
+                    } else if (completion < 0.8) {
+                        // Faster middle - bulk of files uploading
+                        var normalizedCompletion = (completion - 0.2) / 0.6;
+                        targetProgress = 20 + (70 * normalizedCompletion);
+                    } else {
+                        // Slow finish - final processing
+                        var normalizedCompletion = (completion - 0.8) / 0.2;
+                        targetProgress = 90 + (10 * normalizedCompletion);
+                    }
+                    
+                    // If we've reached the end of the simulated upload time
+                    if (completion >= 1) {
+                        clearInterval(progressInterval);
+                        targetProgress = 100;
+                    }
+                }, 100);
+                
+                // Start the smooth progress animation
+                requestAnimationFrame(updateFolderProgressBar);
+                
+                // Allow the form to submit normally
+                return true;
+            });
+            
+            // Add animations to folder and file rows with staggered delays
+            $('.folder-row, .file-row').each(function(index) {
+                $(this).css({
+                    'animation-delay': (index * 0.05) + 's'
+                });
+            });
+            
+            // Add hover and click effects to action buttons
+            $(document).on('mouseenter', '.download-btn, .delete-btn, .download-btn-small, .delete-btn-small', function() {
+                $(this).addClass('hover-effect');
+            }).on('mouseleave', '.download-btn, .delete-btn, .download-btn-small, .delete-btn-small', function() {
+                $(this).removeClass('hover-effect');
+            });
+            
+            // Add animation to subfolder items when they appear
+            $(document).on('DOMNodeInserted', '.subfolder-item', function() {
+                // Force reflow to ensure animation plays
+                void this.offsetWidth;
+                
+                // Apply animation with staggered delay based on position
+                const index = $(this).index();
+                $(this).css({
+                    'animation-delay': (index * 0.05) + 's'
+                });
+            });
+            
+            // Handle collapsible folders
+            console.log('Number of folder links found:', $('.folder-link').length);
+            $(document).on('click', '.folder-link', function() {
+                console.log("Clicked .folder-link"); // DEBUG: Confirm click handler fires
+                // Get folder ID and ensure it's an integer
+                var folderId = parseInt($(this).data('folder-id'), 10);
+                console.log('Clicked folder with ID:', folderId);
+                var folderRow = $(this).closest('.folder-row');
+                console.log('Folder row:', folderRow);
+                
+                // Find the subfolder row that follows this folder row
+                var subfolderRow = folderRow.next('.subfolder-row');
+                console.log('Subfolder row:', subfolderRow.length ? 'found' : 'not found');
+                console.log('Subfolder row data-parent-folder-id:', subfolderRow.data('parent-folder-id'));
+                
+                // Find the subfolder content within the subfolder row
+                var subfolderContent = subfolderRow.find('.subfolder-content');
+                console.log('Subfolder content element:', subfolderContent.length ? 'found' : 'not found');
+                console.log('Subfolder content data-folder-id:', subfolderContent.data('folder-id'));
+                console.log('Subfolder content HTML:', subfolderContent.prop('outerHTML'));
+                
+                // Toggle the visible class on the subfolder row
+                subfolderRow.toggleClass('visible');
+                
+                // Explicitly override the inline style if needed
+                if (subfolderRow.hasClass('visible')) {
+                    subfolderRow.attr('style', 'display: table-row !important');
+                } else {
+                    subfolderRow.attr('style', 'display: none !important');
+                }
+                
+                console.log('Toggled visible class on subfolder row:', subfolderRow.hasClass('visible'));
+                console.log('Subfolder row inline style:', subfolderRow.attr('style'));
+                
+                // Force the subfolder content to be visible in the DOM
+                subfolderContent.css({
+                    'display': 'block',
+                    'visibility': 'visible',
+                    'height': 'auto',
+                    'overflow': 'visible'
+                });
+                
+                var folderIcon = $(this).find('.folder-icon');
+                var toggleIcon = $(this).find('.folder-toggle-icon');
+                
+                // Toggle folder open/closed state
+                if (subfolderContent.is(':empty')) {
+                    // First time opening - fetch content via AJAX
+                    console.log('Sending AJAX request for folder ID:', folderId);
+                    var ajaxUrl = '/file-vault';
+                    console.log('AJAX URL:', ajaxUrl);
+                    // Log all AJAX parameters
+                    console.log('AJAX parameters:', {
+                        url: ajaxUrl,
+                        method: 'GET',
+                        data: { folder_id: folderId, format: 'json' },
+                        dataType: 'json'
+                    });
+                    
+                    // Show the subfolder row before making the AJAX request
+                    subfolderRow.addClass('visible');
+                    subfolderRow.show();
+                    console.log('Showing subfolder row before AJAX request:', subfolderRow.is(':visible'));
+                    console.log('Subfolder row classes:', subfolderRow.attr('class'));
+                    
+                    $.ajax({
+                        url: ajaxUrl,
+                        method: 'GET',
+                        data: { folder_id: folderId, format: 'json' },
+                        dataType: 'json',
+                        // Remove contentType for GET request with URL parameters
+                        success: function(data) {
+                            console.log('Received folder data:', data);
+                            console.log('Folders:', data.folders ? data.folders.length : 0);
+                            console.log('Files:', data.files ? data.files.length : 0);
+                            
+                            if (data.folders && data.folders.length > 0) {
+                                console.log('First folder:', data.folders[0]);
+                            }
+                            
+                            if (data.files && data.files.length > 0) {
+                                console.log('First file:', data.files[0]);
+                            }
+                            
+                            // Check if data is in the expected format
+                            if (!data || typeof data !== 'object') {
+                                console.error('Invalid data format received');
+                                // Ensure the subfolder row is visible
+                                subfolderRow.addClass('visible');
+                                
+                                // Explicitly override the inline style
+                                subfolderRow.attr('style', 'display: table-row !important; visibility: visible !important;');
+                                
+                                console.log('Error handling - Added visible class to subfolder row:', subfolderRow.hasClass('visible'));
+                                console.log('Error handling - Subfolder row inline style:', subfolderRow.attr('style'));
+                                
+                                // Add error message to the subfolder content
+                                subfolderContent.html('<div class="error-message">Error: Invalid data format</div>');
+                                subfolderContent.addClass('visible');
+                                subfolderContent.css({
+                                    'display': 'block',
+                                    'visibility': 'visible'
+                                });
+                                
+                                console.log('Error handling - Subfolder row visible:', subfolderRow.is(':visible'));
+                                console.log('Error handling - Subfolder content visible:', subfolderContent.is(':visible'));
+                                return;
+                            }
+                            // Create HTML for subfolder content
+                            var html = '<div class="subfolder-items">';
+                            
+                            // Add folders
+                            if (data.folders && data.folders.length > 0) {
+                                data.folders.forEach(function(folder) {
+                                    html += '<div class="subfolder-item folder-item" data-folder-id="' + folder.id + '">';
+                                    html += '<i class="fas fa-folder-closed folder-icon"></i>';
+                                    html += '<span class="folder-name">' + folder.name + '</span>';
+                                    html += '</div>';
+                                });
+                            }
+                            
+                            // Add files
+                            if (data.files && data.files.length > 0) {
+                                data.files.forEach(function(file) {
+                                    html += '<div class="subfolder-item file-item" data-file-id="' + file.id + '">';
+                                    html += '<i class="fas fa-file"></i>';
+                                    html += '<span class="file-name">' + file.original_filename + '</span>';
+                                    html += '<div class="item-actions">';
+                                    html += '<a href="/download-file/' + file.id + '" class="download-btn-small" title="Download File"><i class="fas fa-download"></i></a>';
+                                    html += '<button class="delete-btn-small" data-file-id="' + file.id + '" title="Delete File"><i class="fas fa-trash"></i></button>';
+                                    html += '</div>';
+                                    html += '</div>';
+                                });
+                            }
+                            
+                            // If empty
+                            if ((!data.folders || data.folders.length === 0) && (!data.files || data.files.length === 0)) {
+                                html += '<div class="subfolder-empty"><i class="fas fa-folder-open"></i> This folder is empty</div>';
+                            }
+                            
+                            html += '</div>';
+                            
+                            // Log the generated HTML for debugging
+                            console.log('Generated HTML:', html);
+                            
+                            // Add to DOM and show
+                            console.log('Before updating content - Subfolder row visible:', subfolderRow.is(':visible'));
+                            console.log('Before updating content - Subfolder content HTML:', subfolderContent.html());
+                            
+                            // First, ensure the subfolder row is visible with the right display type
+                            subfolderRow.addClass('visible');
+                            
+                            // Explicitly override the inline style
+                            subfolderRow.attr('style', 'display: table-row !important; visibility: visible !important;');
+                            
+                            console.log('Added visible class to subfolder row:', subfolderRow.hasClass('visible'));
+                            console.log('Subfolder row inline style after AJAX success:', subfolderRow.attr('style'));
+                            
+                            // Then ensure the subfolder content has the right styles
+                            subfolderContent.css({
+                                'display': 'block',
+                                'visibility': 'visible',
+                                'height': 'auto',
+                                'max-height': '1000px',
+                                'overflow': 'visible'
+                            });
+                            
+                            // Then add the HTML content
+                            subfolderContent.html(html);
+                            
+                            // Add the visible class
+                            subfolderContent.addClass('visible');
+                            
+                            // Force a reflow to ensure the browser applies the changes
+                            void subfolderRow[0].offsetHeight;
+                            
+                            // Check if content was added to the DOM
+                            console.log('After updating content - Subfolder row visible:', subfolderRow.is(':visible'));
+                            console.log('After updating content - Subfolder row display style:', subfolderRow.css('display'));
+                            console.log('After updating content - Subfolder content HTML:', subfolderContent.html());
+                            console.log('After updating content - Subfolder content display style:', subfolderContent.css('display'));
+                            
+                            // Try to force the browser to show the element
+                            setTimeout(function() {
+                                console.log('After timeout - Subfolder row visible:', subfolderRow.is(':visible'));
+                                console.log('After timeout - Subfolder content visible:', subfolderContent.is(':visible'));
+                                
+                                // If still not visible, try forcing it again
+                                if (!subfolderRow.is(':visible')) {
+                                    console.log('Forcing visibility again');
+                                    subfolderRow.addClass('visible');
+                                    
+                                    // Explicitly override the inline style
+                                    subfolderRow.attr('style', 'display: table-row !important; visibility: visible !important;');
+                                    
+                                    subfolderContent.css({
+                                        'display': 'block',
+                                        'visibility': 'visible'
+                                    });
+                                    console.log('After forcing - Subfolder row has visible class:', subfolderRow.hasClass('visible'));
+                                    console.log('After forcing - Subfolder row inline style:', subfolderRow.attr('style'));
+                                }
+                            }, 500);
+                            
+                            // Update icons
+                            folderIcon.removeClass('fa-folder-closed').addClass('fa-folder-open');
+                            toggleIcon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                            
+                            // Add click handlers for subfolder items with animation
+                            $('.subfolder-item.folder-item').click(function(e) {
+                                e.stopPropagation();
+                                var subFolderId = $(this).data('folder-id');
+                                
+                                // Add clicked class for animation
+                                $(this).addClass('clicked');
+                                
+                                // Create a loading effect before redirecting
+                                const item = $(this);
+                                setTimeout(function() {
+                                    // Redirect to this subfolder after a short delay for animation
+                                    window.location.href = '/file-vault?folder_id=' + subFolderId;
+                                }, 300);
+                            });
+                            
+                            // Add delete handlers for file items with animation
+                            $('.delete-btn-small').click(function(e) {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                
+                                // Add clicked class for animation
+                                $(this).addClass('clicked');
+                                
+                                const deleteBtn = $(this);
+                                setTimeout(function() {
+                                    if (confirm('Are you sure you want to delete this file?')) {
+                                        var fileId = deleteBtn.data('file-id');
+                                        // Submit delete request
+                                        var form = $('<form method="POST" action="/delete-file/' + fileId + '"></form>');
+                                        $('body').append(form);
+                                        form.submit();
+                                    } else {
+                                        // Remove clicked class if canceled
+                                        deleteBtn.removeClass('clicked');
+                                    }
+                                }, 300);
+                            });
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('AJAX Error:', status, error);
+                            console.log('Response:', xhr.responseText);
+                            
+                            // Ensure the subfolder row is visible
+                            subfolderRow.addClass('visible');
+                            
+                            // Explicitly override the inline style
+                            subfolderRow.attr('style', 'display: table-row !important; visibility: visible !important;');
+                            
+                            console.log('AJAX error - Added visible class to subfolder row:', subfolderRow.hasClass('visible'));
+                            console.log('AJAX error - Subfolder row inline style:', subfolderRow.attr('style'));
+                            
+                            // Add error message to the subfolder content
+                            subfolderContent.html('<div class="error-message">Error loading folder contents</div>');
+                            subfolderContent.addClass('visible');
+                            subfolderContent.css({
+                                'display': 'block',
+                                'visibility': 'visible'
+                            });
+                            
+                            console.log('AJAX error handling - Subfolder row visible:', subfolderRow.is(':visible'));
+                            console.log('AJAX error handling - Subfolder content visible:', subfolderContent.is(':visible'));
+                        }
+                    });
+                } else {
+                    // Already loaded - just toggle visibility
+                    if (subfolderContent.hasClass('visible')) {
+                        // Hide content
+                        subfolderContent.removeClass('visible');
+                        subfolderRow.removeClass('visible');
+                        subfolderRow.slideUp(300, function() {
+                             $(this).attr('style', 'display: none !important');
+                             console.log('After hiding - subfolder row display:', $(this).css('display'));
+                             console.log('After hiding - subfolder row inline style:', $(this).attr('style'));
+                         });
+                        folderIcon.removeClass('fa-folder-open').addClass('fa-folder-closed');
+                        toggleIcon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                        console.log('Closing folder - Removed visible class from subfolder row:', !subfolderRow.hasClass('visible'));
+                    } else {
+                        // Show content
+                        subfolderContent.addClass('visible');
+                        subfolderRow.addClass('visible');
+                        subfolderRow.slideDown(300, function() {
+                             $(this).attr('style', 'display: table-row !important');
+                             console.log('After showing - subfolder row display:', $(this).css('display'));
+                             console.log('After showing - subfolder row inline style:', $(this).attr('style'));
+                         });
+                        folderIcon.removeClass('fa-folder-closed').addClass('fa-folder-open');
+                        toggleIcon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                        console.log('Opening folder - Added visible class to subfolder row:', subfolderRow.hasClass('visible'));
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

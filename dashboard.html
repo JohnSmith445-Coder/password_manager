@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Vault - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-ui.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-title">Secure Vault</div>
+        <ul class="sidebar-menu">
+            <li class="active"><a href="{{ url_for('dashboard') }}"><i class="fas fa-th-large"></i> Workspaces</a></li>
+            <li><a href="{{ url_for('password_manager') }}"><i class="fas fa-key"></i> Password Manager</a></li>
+            <li><a href="{{ url_for('file_vault') }}"><i class="fas fa-lock"></i> File Vault</a></li>
+            <li><a href="{{ url_for('terminal') }}"><i class="fas fa-terminal"></i> Terminal</a></li>
+            <li><a href="{{ url_for('account_settings') }}"><i class="fas fa-user-cog"></i> Account Settings</a></li>
+        </ul>
+    </div>
+
+    <!-- Notification center -->
+    <div class="notification-center" id="notification-center">
+        <div class="notification-header">
+            <h3><i class="fas fa-bell"></i> Notifications</h3>
+            <button id="close-notifications"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="notification-list" id="notification-list">
+            <div class="notification-item">
+                <div class="notification-icon"><i class="fas fa-info-circle"></i></div>
+                <div class="notification-content">
+                    <div class="notification-title">Welcome to Secure Vault</div>
+                    <div class="notification-message">Your workspace is ready to use.</div>
+                    <div class="notification-time">Just now</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification bell icon -->
+    <div class="notification-bell" id="notification-bell">
+        <i class="fas fa-bell"></i>
+        <span class="notification-badge">1</span>
+    </div>
+
+    <div class="container">
+        <div class="running-containers">
+            <h2>Running Containers</h2>
+            <ul id="container-list"></ul>
+        </div>
+
+        <div class="welcome-message">
+            <h1>Welcome to Secure Vault</h1>
+            <p>Launch a workspace below to get started.</p>
+            <div class="feature-highlight">
+                <h2><i class="fas fa-hdd"></i> Persistent Storage & Session Management</h2>
+                <p>All containers now include persistent storage and improved session management options!</p>
+                <ul class="feature-benefits">
+                    <li><i class="fas fa-check"></i> Browser profiles and bookmarks are preserved</li>
+                    <li><i class="fas fa-check"></i> Development environments maintain installed packages</li>
+                    <li><i class="fas fa-check"></i> User preferences and configurations persist</li>
+                    <li><i class="fas fa-check"></i> Work files remain available in future sessions</li>
+                </ul>
+                <div class="feature-note">
+                    <p><span class="storage-badge"><i class="fas fa-hdd"></i> Persistent Storage</span> is enabled for all containers.</p>
+                    <p><strong>New Session Management Options:</strong></p>
+                    <ul class="session-options">
+                        <li><span class="save-badge"><i class="fas fa-save"></i> Save</span> - Gracefully stops the container, saving all changes to persistent storage</li>
+                        <li><span class="kill-badge"><i class="fas fa-times-circle"></i> Kill</span> - Immediately terminates the container without waiting for processes to complete</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workspace Grid -->
+                <div class="workspace-grid">
+                    {% for key, svc in services.items() %}
+                    <div class="workspace-tile" data-service="{{ key }}">
+                        <img src="{{ url_for('static', filename='icons/' + svc.icon) }}" alt="{{ svc.label }} icon">
+                        <span>{{ svc.label }}</span>
+                        <div class="info-overlay">
+                            <p>{{ svc.description if svc.description is defined else 'Launch ' + svc.label }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+    </div>
+
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            function fetchContainers() {
+                $.getJSON('/containers', function(data) {
+                    $('#container-list').empty();
+                    if (data.length === 0) {
+                        $('#container-list').append('<li><div class="container-info">No running containers</div></li>');
+                        return;
+                    }
+                    
+                    data.forEach(function(container) {
+                        var li = $('<li>');
+                        var containerInfo = $('<div>').addClass('container-info');
+                        containerInfo.append($('<span>').addClass('container-name').text(container.name));
+                        containerInfo.append($('<span>').addClass('container-image').text(container.image));
+                        containerInfo.append($('<span>').addClass('container-status').text(container.status === 'running' ? 'Running' : container.status));
+                        
+                        // Only show persistent storage indicator if container has it
+                        if (container.has_persistent_storage) {
+                            var storageInfo = $('<span>').addClass('container-storage')
+                                .html('<i class="fas fa-hdd"></i> Persistent Storage');
+                            
+                            // Add tooltip with mount information if available
+                            if (container.volume_mounts && container.volume_mounts.length > 0) {
+                                var tooltipText = 'Mounted volumes:\n';
+                                container.volume_mounts.forEach(function(mount) {
+                                    tooltipText += mount.source + ' → ' + mount.destination + '\n';
+                                });
+                                storageInfo.attr('title', tooltipText);
+                            }
+                            
+                            containerInfo.append(storageInfo);
+                        }
+                        
+                        if (container.status === 'running' && container.host_port) {
+                            var proto = container.proto || 'http';
+                            var link = $('<a>')
+                                .attr('href', proto + '://localhost:' + container.host_port)
+                                .attr('target', '_blank')
+                                .text('Open')
+                                .addClass('container-link')
+                                .data('port', container.host_port)
+                                .data('proto', proto);
+                            containerInfo.append(link);
+                            var actionDiv = $('<div>').addClass('container-actions');
+                            var saveBtn = $('<button>').text('Save').addClass('save-container').data('id', container.id);
+                            var killBtn = $('<button>').text('Kill').addClass('kill-container').data('id', container.id);
+                            actionDiv.append(saveBtn).append(killBtn);
+                            containerInfo.append(actionDiv);
+                        }
+                        li.append(containerInfo);
+                        $('#container-list').append(li);
+                    });
+                });
+            }
+
+            fetchContainers();
+            setInterval(fetchContainers, 5000);
+
+            // Handle click on workspace tiles
+            $('.workspace-tile').on('click', function(event) { // Added event parameter
+                var service = $(this).data('service');
+                var $this = $(this);
+                
+                // Add clicked class for transition effect
+                $this.addClass('clicked');
+                
+                // Add loading class
+                $this.addClass('loading');
+                
+                // Create ripple effect
+                var posX = event.pageX - $(this).offset().left;
+                var posY = event.pageY - $(this).offset().top;
+                var ripple = $('<span class="ripple"></span>').css({
+                    left: posX,
+                    top: posY
+                });
+                $(this).append(ripple);
+                
+                // AJAX request to launch the service
+                $.ajax({
+                    url: '/api/launch',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ service: service }),
+                    success: function(response) {
+                        // Remove loading class and add success class
+                        $this.removeClass('loading').addClass('success');
+                        
+                        // Remove clicked class after transition
+                        setTimeout(function() {
+                            $this.removeClass('clicked');
+                        }, 300);
+                        
+                        // Open the service in a new window after a short delay
+                        setTimeout(function() {
+                            if (response.success) {
+                                if (response.url) {
+                                    window.open(response.url, '_blank');
+                                } else {
+                                    var url = response.proto + '://localhost:' + response.host_port;
+                                    window.open(url, '_blank');
+                                }
+                                fetchContainers();
+                            } else {
+                                alert('Error: ' + response.error);
+                            }
+                            
+                            // Remove success class after opening
+                            setTimeout(function() {
+                                $this.removeClass('success');
+                                ripple.remove();
+                            }, 1000);
+                        }, 1500);
+                    },
+                    error: function(xhr, status, error) {
+                        // Remove loading and clicked classes on error
+                        $this.removeClass('loading clicked');
+                        ripple.remove();
+                        alert('Error launching workspace: ' + error);
+                    }
+                });
+            });
+
+            $('#container-list').on('click', '.save-container, .kill-container', function() {
+                var containerId = $(this).data('id');
+                var action = $(this).hasClass('save-container') ? 'save' : 'kill';
+                var confirmMessage = action === 'save' ? 
+                    'This will gracefully stop the container and save its state to persistent storage.' : 
+                    'This will immediately kill the container without saving any unsaved changes.';
+                
+                if (confirm(confirmMessage + '\nDo you want to continue?')) {
+                    $.ajax({
+                        url: '/containers/stop',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ 
+                            id: containerId,
+                            action: action
+                        }),
+                        success: function(response) {
+                            if (response.success) {
+                                alert(response.message || 'Container ' + (action === 'save' ? 'saved' : 'killed') + ' successfully');
+                                fetchContainers();
+                            } else {
+                                alert('Error: ' + response.error);
+                            }
+                        }
+                    });
+                }
+            });
+            
+            // Add ripple effect to workspace tiles
+            $('.workspace-tile').on('mousedown', function(e) {
+                var tile = $(this);
+                var x = e.pageX - tile.offset().left;
+                var y = e.pageY - tile.offset().top;
+                
+                var ripple = $('<span class="ripple"></span>');
+                ripple.css({
+                    left: x + 'px',
+                    top: y + 'px',
+                    width: '20px',
+                    height: '20px'
+                });
+                
+                tile.append(ripple);
+                
+                setTimeout(function() {
+                    ripple.remove();
+                }, 600);
+            });
+            
+            // Set animation order for workspace tiles
+            $('.workspace-tile').each(function(index) {
+                $(this).css('--animation-order', index);
+            });
+            
+            // Update running status for workspace tiles
+            function updateRunningStatus() {
+                $.getJSON('/containers', function(data) {
+                    // First, remove running class from all tiles and reset status
+                    $('.workspace-tile').removeClass('running').attr('data-status', 'Click to Launch');
+                    
+                    // Then add running class to tiles with active containers
+                    data.forEach(function(container) {
+                        var service = container.service || container.image.split(':')[0].split('/').pop();
+                        var tile = $('.workspace-tile[data-service="' + service + '"]');
+                        
+                        if (container.status === 'running') {
+                            tile.addClass('running');
+                            tile.attr('data-status', 'Running - Click to Open');
+                        } else if (container.status) {
+                            tile.attr('data-status', 'Status: ' + container.status.charAt(0).toUpperCase() + container.status.slice(1));
+                        }
+                    });
+                });
+            }
+            
+            // Initial update and set interval
+            updateRunningStatus();
+            setInterval(updateRunningStatus, 5000);
+        });
+    </script>
+</body>
+</html>

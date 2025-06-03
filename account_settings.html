@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - Secure Vault</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-ui.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/2fa.css') }}">
+    <script src="{{ url_for('static', filename='js/2fa.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-title">Secure Vault</div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-th-large"></i> Workspaces</a></li>
+            <li><a href="{{ url_for('password_manager') }}"><i class="fas fa-key"></i> Password Manager</a></li>
+            <li><a href="{{ url_for('file_vault') }}"><i class="fas fa-lock"></i> File Vault</a></li>
+            <li><a href="{{ url_for('terminal') }}"><i class="fas fa-terminal"></i> Terminal</a></li>
+            <li class="active"><a href="{{ url_for('account_settings') }}"><i class="fas fa-user-cog"></i> Account Settings</a></li>
+        </ul>
+        
+        <!-- User profile section at bottom of sidebar -->
+        <div class="sidebar-user" id="sidebar-user-btn">
+            <div class="user-avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="user-info">
+                <div class="user-name">{{ session.get('user', 'User') }}</div>
+                <div class="user-role">Administrator</div>
+            </div>
+            <div class="user-chevron">
+                <i class="fas fa-chevron-up"></i>
+            </div>
+        </div>
+        
+        <!-- User modal with options -->
+        <div class="user-modal" id="user-modal">
+            <div class="user-modal-option active" id="account-btn">
+                <i class="fas fa-user-cog"></i>
+                <span>Account Settings</span>
+            </div>
+            <div class="user-modal-option" id="theme-toggle">
+                <i class="fas fa-moon"></i>
+                <span>Dark Mode</span>
+            </div>
+            <div class="user-modal-option" id="settings-btn">
+                <i class="fas fa-cog"></i>
+                <span>Preferences</span>
+            </div>
+            <div class="user-modal-option" id="help-btn">
+                <i class="fas fa-question-circle"></i>
+                <span>Help & Support</span>
+            </div>
+            <div class="user-modal-separator"></div>
+            <div class="user-modal-option logout-option">
+                <a href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="settings-header">
+            <h1><i class="fas fa-user-cog"></i> Account Settings</h1>
+            <p>Manage your account information, security settings, and preferences</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="settings-grid">
+            <!-- Profile Information Section -->
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h2><i class="fas fa-id-card"></i> Profile Information</h2>
+                </div>
+                <div class="settings-card-content">
+                    <form id="profile-form" class="settings-form" action="{{ url_for('update_profile') }}" method="post">
+                        <div class="form-group">
+                            <label for="display-name">Display Name</label>
+                            <input type="text" id="display-name" name="display_name" value="{{ user_data.username }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" value="{{ user_data.email or '' }}">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+<div class="security-section">
+        <h3>Security Settings</h3>
+        <div class="security-option">
+            <form action="/update-password" method="post">
+                <h4>Change Password</h4>
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <input type="password" id="current_password" name="current_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" id="new_password" name="new_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+                <div class="security-actions">
+                    <button type="submit" class="btn-primary">Update Password</button>
+                </div>
+            </form>
+        </div>
+        <div class="security-option">
+            <h4>Two-Factor Authentication
+                {% if user_data.totp_enabled %}
+                <span class="totp-status totp-enabled">Enabled</span>
+                {% else %}
+                <span class="totp-status totp-disabled">Disabled</span>
+                {% endif %}
+            </h4>
+            <p class="help-text">Two-factor authentication adds an extra layer of security to your account by requiring a code from your phone in addition to your password.</p>
+            
+            <div class="security-actions">
+                {% if user_data.totp_enabled %}
+                <button id="disable-totp-btn" class="btn-danger">Disable 2FA</button>
+                {% else %}
+                <button id="setup-totp-btn" class="btn-primary">Set Up 2FA</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+
+    <!-- 2FA Setup Modal -->
+    <div id="totp-setup-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-shield-alt"></i> Set Up Two-Factor Authentication</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="setup-steps">
+                    <div class="setup-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Scan QR Code</h4>
+                            <p>Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+                            <div id="qr-code-container">
+                                <!-- QR code will be inserted here via AJAX -->
+                            </div>
+                            <div class="manual-code-container">
+                                <p>Or enter this key manually:</p>
+                                <code id="manual-code"><!-- Secret key will be inserted here via AJAX --></code>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setup-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Verify Code</h4>
+                            <p>Enter the 6-digit verification code from your authenticator app</p>
+                            <div class="verification-container">
+                                <input type="text" id="verify-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000">
+                                <button type="button" id="verify-code-btn" class="btn-primary">Verify</button>
+                                <div id="verify-error"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setup-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Save Recovery Codes</h4>
+                            <p>Store these recovery codes in a safe place. You can use them to access your account if you lose your device.</p>
+                            <div class="recovery-codes-container">
+                                <div id="recovery-codes" class="recovery-codes-list">
+                                    <!-- Recovery codes will be inserted here via AJAX -->
+                                </div>
+                                <button type="button" id="download-codes" class="btn-secondary"><i class="fas fa-download"></i> Download Codes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="prev-step-btn" class="btn-secondary">Previous</button>
+                <button type="button" id="next-step-btn" class="btn-primary">Next</button>
+                <button type="button" id="verify-code-btn" class="btn-primary modal-verify-btn">Verify</button>
+                <button type="button" id="complete-setup-btn" class="btn-primary">Complete Setup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- No custom script needed here as we're using the 2fa.js file included in the head section -->
+<!-- The script tags are already included in the head section -->
+</body>
+</html>
